@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>會員限定貼文</title>
+  <link rel="icon" href="icons/128.png" type="image/png" sizes="128x128">
+  <style>
+    :root {
+      --bg-gradient: linear-gradient(135deg, #0a0a0a 0%, #4a004a 50%, #ff66b2 100%);
+      --card-bg: #f3f3f3;
+      --text-main: #0f0f0f;
+      --text-sub: #606060;
+      --border-color: #dcdcdc;
+      --link-color: #065fd4;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, Roboto, "Helvetica Neue", "Noto Sans TC", "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+      text-autospace: normal;
+      background-image: var(--bg-gradient);
+      background-attachment: fixed;
+      min-height: 100dvh;
+      color: var(--text-main);
+      margin: 0;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: clamp(1.5rem, 5vw, 2.5rem); 
+      color: #ffffff;
+      text-align: center;
+      margin-bottom: 2rem;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+
+    #posts-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1rem;
+      align-items: start; 
+    }
+
+    .post-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+      max-height: 480px;
+      overflow: auto;
+      box-shadow: 
+        2px 2px 0px #fa96e6,
+        4px 4px 0px #fa96e6,
+        6px 6px 0px #fa96e6,
+        8px 8px 12px rgba(0,0,0,0.4);
+      transition: transform 0.2s ease;
+      
+      &::-webkit-scrollbar {
+        width: 6px;
+      }
+      &::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      &::-webkit-scrollbar-thumb {
+        background: #ccc;
+        border-radius: 3px;
+      }
+      &::-webkit-scrollbar-thumb:hover {
+        background: #aaa;
+      }
+
+      &:hover {
+        transform: translate(-2px, -2px);
+      }
+
+      & .post-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+
+        & .post-time {
+          color: var(--text-sub);
+          font-size: 0.9rem;
+        }
+
+        & .post-link {
+          font-size: 0.85rem;
+          color: var(--link-color);
+          text-decoration: none;
+          background: rgba(6, 95, 212, 0.1);
+          padding: 4px 8px;
+          border-radius: 4px;
+
+          &:hover {
+            background: rgba(6, 95, 212, 0.2);
+          }
+        }
+      }
+
+      & .post-text {
+        white-space: pre-wrap;
+        line-height: 1.6;
+        margin-bottom: 16px;
+        word-break: break-word;
+
+        & a {
+          color: var(--link-color);
+          text-decoration: none;
+          
+          &:hover {
+            text-decoration: underline;
+          }
+        }
+      }
+
+      & .post-images {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 8px;
+
+        & img {
+          width: 100%;
+          height: auto;
+          border-radius: 8px;
+          object-fit: cover;
+        }
+      }
+
+      /* 影片/直播區塊樣式 */
+      & .post-video {
+        margin-top: 12px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        overflow: hidden;
+        background: #ffffff;
+
+        & a {
+          display: flex;
+          flex-direction: column;
+          text-decoration: none;
+          color: var(--text-main);
+        }
+
+        & img {
+          width: 100%;
+          height: auto;
+          aspect-ratio: 16 / 9;
+          object-fit: cover;
+        }
+
+        & .video-title {
+          padding: 12px;
+          font-weight: 700;
+          font-size: 0.95rem;
+          word-break: break-word;
+        }
+
+        &:hover {
+          background: #f9f9f9;
+        }
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>會員限定貼文</h1>
+    <div id="posts-container"></div>
+  </div>
+  <script src="result.js"></script>
+</body>
+</html>
