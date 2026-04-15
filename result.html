@@ -20,7 +20,7 @@
       text-autospace: normal;
       background-image: var(--bg-gradient);
       background-attachment: fixed;
-      min-height: 100dvh;
+      min-height: 100vh;
       color: var(--text-main);
       margin: 0;
       padding: 20px;
@@ -35,8 +35,34 @@
       font-size: clamp(1.5rem, 5vw, 2.5rem); 
       color: #ffffff;
       text-align: center;
-      margin-bottom: 2rem;
+      margin-bottom: 1rem;
       text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+
+    .filter-bar {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      margin-bottom: 24px;
+      gap: 12px;
+      color: #ffffff;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+      
+      & select {
+        padding: 8px 16px;
+        font-size: 1rem;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        background-color: var(--card-bg);
+        color: var(--text-main);
+        font-family: inherit;
+        cursor: pointer;
+        outline: none;
+        
+        &:hover {
+          border-color: #aaa;
+        }
+      }
     }
 
     #posts-container {
@@ -51,7 +77,7 @@
       border: 1px solid var(--border-color);
       border-radius: 12px;
       padding: 20px;
-      max-height: 480px;
+      max-height: 580px;
       overflow: auto;
       box-shadow: 
         2px 2px 0px #fa96e6,
@@ -132,7 +158,6 @@
         }
       }
 
-      /* 影片/直播區塊樣式 */
       & .post-video {
         margin-top: 12px;
         border: 1px solid var(--border-color);
@@ -169,8 +194,18 @@
   </style>
 </head>
 <body>
-  <div class="container">
+  <div id="no-data" style="display:none; text-align:center; padding: 50px;">
+    <h2>沒有抓取到任何資料，請回上一頁重抓</h2>
+    <p>（這可能是因為您在抓取時切換了分頁，導致背景暫停渲染，或者目前確實沒有會員貼文）</p>
+    <button id="retry-btn" style="margin-top:20px; padding:10px 20px; font-size:16px; cursor:pointer; background-color:var(--link-color); color:white; border:none; border-radius:5px;">切換回上一頁</button>
+  </div>
+  <div class="container" id="main-app">
     <h1>會員限定貼文</h1>
+    <div class="filter-bar">
+      <label for="year-filter">時間篩選：</label>
+      <select id="year-filter">
+        </select>
+    </div>
     <div id="posts-container"></div>
   </div>
   <script src="result.js"></script>

@@ -61,13 +61,19 @@ function autoScrollAndExtract() {
     if (!badge) return;
 
     const badgeText = badge.textContent.toLowerCase();
-    const isMember = SELECTORS.memberKeywords.some(keyword => badgeText.includes(keyword.toLowerCase()));
+    const badgeLabel = badge.getAttribute('aria-label') || '';
+    const badgeTooltip = badge.querySelector('tp-yt-paper-tooltip') ? badge.querySelector('tp-yt-paper-tooltip').textContent : '';
+    const isMember = SELECTORS.memberKeywords.some(keyword => 
+      badgeText.includes(keyword.toLowerCase()) || 
+      badgeLabel.toLowerCase().includes(keyword.toLowerCase()) ||
+      badgeTooltip.toLowerCase().includes(keyword.toLowerCase())
+    );
     if (!isMember) return;
 
     // 2. 取得 ID (以此為基準合併資料)
     const timeLinkNode = postNode.querySelector(SELECTORS.timeLink);
     const postLink = timeLinkNode ? timeLinkNode.href : '';
-    const postId = postLink || postNode.id || postNode.querySelector(SELECTORS.content)?.textContent.substring(0, 50);
+    const postId = postLink || postNode.id || (postNode.textContent ? postNode.textContent.trim().substring(0, 50) : Date.now().toString());
     if (!postId) return;
 
     // 取得現有資料以便後續「合併更新」
@@ -79,17 +85,20 @@ function autoScrollAndExtract() {
     const contentNode = postNode.querySelector(SELECTORS.content);
     if (contentNode) {
       let tempContent = '';
-      contentNode.childNodes.forEach(child => {
-        if (child.nodeName === 'A') {
-          let url = child.href;
+      const walkDOM = (node) => {
+        if (node.nodeName === 'A') {
+          let url = node.href;
           if (url.includes('/redirect?')) {
             try { url = new URL(url).searchParams.get('q') || url; } catch (e) {}
           }
           tempContent += `<a href="${url}" target="_blank">${escapeText(url)}</a>`;
-        } else {
-          tempContent += escapeText(child.textContent);
+        } else if (node.nodeType === 3) { // TEXT_NODE
+          tempContent += escapeText(node.textContent);
+        } else if (node.nodeType === 1) { // ELEMENT_NODE
+          node.childNodes.forEach(walkDOM);
         }
-      });
+      };
+      walkDOM(contentNode);
       if (tempContent) parsedContent = tempContent;
     }
 
@@ -108,6 +117,9 @@ function autoScrollAndExtract() {
     currentImages.forEach(src => {
       if (!mergedImages.includes(src)) mergedImages.push(src);
     });
+
+    // 檢查是否有「多張圖片」的指示器（右箭頭）
+    const hasMultipleImages = !!postNode.querySelector('ytd-post-multi-image-renderer #right-arrow-container') || existing.hasMultipleImages;
 
     // 5. 解析影片或直播區塊
     let videoData = existing.videoData || null;
@@ -129,29 +141,35 @@ function autoScrollAndExtract() {
     }
 
     // 每次掃描都覆蓋/更新 Map 裡的資料
-    collectedPosts.set(postId, { parsedContent, timeText, postLink, images: mergedImages, videoData });
+    collectedPosts.set(postId, { parsedContent, timeText, postLink, images: mergedImages, videoData, hasMultipleImages });
   };
 
   const scrollInterval = setInterval(() => {
     const mainContainer = document.querySelector(SELECTORS.container);
-    if (mainContainer) {
-      mainContainer.querySelectorAll(SELECTORS.postWrapper).forEach(extractPost);
-    }
-
+    
+    // 取消邊滾邊抓，只負責滾動
     window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
     window.dispatchEvent(new Event('scroll'));
     
     const currentHeight = document.documentElement.scrollHeight;
-    const currentPostCount = collectedPosts.size;
+    // 這裡的 currentPostCount 可以改用畫面上總貼文數來幫助判斷滾動是否停止
+    const currentPostCount = mainContainer ? mainContainer.querySelectorAll(SELECTORS.postWrapper).length : 0;
 
     if (currentHeight === lastHeight && currentPostCount === lastPostCount) {
       noChangeCount++;
       if (noChangeCount >= 8) {
         clearInterval(scrollInterval);
-        toast.textContent = `擷取完畢！共 ${collectedPosts.size} 篇，準備開啟閱讀器...`;
-        toast.style.background = '#000';
+        
+        // 滾動確定結束後，再一次性抓取所有貼文
+        if (mainContainer) {
+          mainContainer.querySelectorAll(SELECTORS.postWrapper).forEach(extractPost);
+        }
         
         const results = Array.from(collectedPosts.values());
+        
+        toast.textContent = `擷取完畢！共 ${results.length} 篇，準備開啟閱讀器...`;
+        toast.style.background = '#000';
+        
         chrome.storage.local.set({ memberPosts: results }, () => {
           chrome.runtime.sendMessage({ action: 'openReader' });
           setTimeout(() => toast.remove(), 3000);
