@@ -1,4 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const sourceUrl = urlParams.get('source');
+
   chrome.storage.local.get(['memberPosts'], (result) => {
     const posts = result.memberPosts || [];
     const container = document.getElementById('posts-container');
@@ -11,15 +14,19 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('main-app').style.display = 'none';
       
       document.getElementById('retry-btn').addEventListener('click', () => {
-        // 尋找最近一個 YouTube 分頁並切換過去，若沒有則關閉當前頁面
-        chrome.tabs.query({ url: "*://*.youtube.com/*" }, (tabs) => {
-          if (tabs.length > 0) {
-            chrome.tabs.update(tabs[0].id, { active: true });
-            chrome.windows.update(tabs[0].windowId, { focused: true });
-          } else {
-            window.close();
-          }
-        });
+        if (sourceUrl) {
+          chrome.tabs.create({ url: sourceUrl });
+        } else {
+          // 尋找最近一個 YouTube 分頁並切換過去，若沒有則關閉當前頁面
+          chrome.tabs.query({ url: "*://*.youtube.com/*" }, (tabs) => {
+            if (tabs.length > 0) {
+              chrome.tabs.update(tabs[0].id, { active: true });
+              chrome.windows.update(tabs[0].windowId, { focused: true });
+            } else {
+              window.close();
+            }
+          });
+        }
       });
       return;
     }
@@ -92,6 +99,29 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
       }
 
+      let voteHtml = '';
+      if (post.voteData) {
+        const { totalVotes, voted, choices } = post.voteData;
+        const choicesHtml = choices.map(c => {
+          if (voted && c.percentage !== null) {
+            return `<div class="vote-choice">
+              <div class="vote-choice-header">
+                <span class="vote-choice-text">${escapeHtml(c.text)}</span>
+                <span class="vote-choice-pct">${escapeHtml(c.percentage)}</span>
+              </div>
+              <div class="vote-bar-bg"><div class="vote-bar-fill" style="width:${c.width}%"></div></div>
+            </div>`;
+          }
+          return `<div class="vote-choice vote-choice-unvoted">
+            <span class="vote-choice-text">${escapeHtml(c.text)}</span>
+          </div>`;
+        }).join('');
+        voteHtml = `<div class="post-vote">
+          <div class="vote-choices">${choicesHtml}</div>
+          ${totalVotes ? `<div class="vote-total">${escapeHtml(totalVotes)}</div>` : ''}
+        </div>`;
+      }
+
       const linkHtml = post.postLink ? `<a href="${post.postLink}" target="_blank" class="post-link">前往原文</a>` : '';
 
       const multiImgNotice = post.hasMultipleImages ? `<div style="color: var(--link-color); font-weight: bold; font-size: 0.85rem; margin-top: 5px;">*有複數圖片</div>` : '';
@@ -104,6 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="post-text">${post.parsedContent}</div>
         ${imagesHtml ? `<div class="post-images">${imagesHtml}${multiImgNotice}</div>` : ''}
         ${videoHtml}
+        ${voteHtml}
       `;
 
       container.appendChild(card);

@@ -1,15 +1,32 @@
 chrome.action.onClicked.addListener((tab) => {
   if (!tab.url.includes('youtube.com')) return;
 
-  chrome.scripting.executeScript({
-    target: { tabId: tab.id },
-    func: autoScrollAndExtract
+  chrome.storage.local.get(['isRunning'], (result) => {
+    if (result.isRunning) {
+      chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: showToast,
+        args: ['已有頁面執行中']
+      });
+      return;
+    }
+
+    chrome.storage.local.set({ isRunning: true, sourceUrl: tab.url }, () => {
+      chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: autoScrollAndExtract
+      });
+    });
   });
 });
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'openReader') {
-    chrome.tabs.create({ url: chrome.runtime.getURL('result.html') });
+    chrome.storage.local.get(['sourceUrl'], (result) => {
+      const sourceUrl = result.sourceUrl || '';
+      chrome.tabs.create({ url: chrome.runtime.getURL('result.html') + '?source=' + encodeURIComponent(sourceUrl) });
+      chrome.storage.local.remove(['isRunning', 'sourceUrl']);
+    });
   }
 });
 
@@ -27,7 +44,7 @@ function autoScrollAndExtract() {
     
     // 會員判定
     memberBadge: '#sponsors-only-badge, ytd-sponsors-only-badge-renderer',
-    memberKeywords: ['會員', 'member', 'sponsor', 'メンバー',],
+    memberKeywords: ['會員', '会员', 'member', 'sponsor', 'メンバー', '멤버', '후원자', 'membre', 'miembro', 'membro', 'mitglied', 'участник', 'anggota', 'สมาชิก', 'thành viên', 'सदस्य', 'عضو'],
     
     // 貼文時間與內容
     timeLink: 'yt-formatted-string#published-time-text a, yt-formatted-string#video-time-text a',
@@ -40,7 +57,15 @@ function autoScrollAndExtract() {
     videoWrapper: 'ytd-video-renderer, ytd-post-uploaded-video-renderer',
     videoTitle: '#video-title',
     videoLink: 'a#thumbnail, a#video-title',
-    videoThumb: 'ytd-thumbnail img, #thumbnail-container img'
+    videoThumb: 'ytd-thumbnail img, #thumbnail-container img',
+
+    // 投票區塊
+    pollContainer: 'ytd-backstage-poll-renderer',
+    pollTotalVotes: '#vote-info',
+    pollChoices: 'tp-yt-paper-item.vote-choice',
+    pollChoiceText: 'yt-formatted-string.choice-text',
+    pollChoicePercentage: 'yt-formatted-string.vote-percentage',
+    pollProgressBar: '.progress-bar'
   };
 
   const toast = document.createElement('div');
@@ -56,19 +81,33 @@ function autoScrollAndExtract() {
   const escapeText = (str) => str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
   const extractPost = (postNode) => {
+    // console.log('Processing post:', postNode);
+
     // 1. 判定會員資格
     const badge = postNode.querySelector(SELECTORS.memberBadge);
-    if (!badge) return;
+    // console.log('Badge found:', badge);
+    if (!badge) {
+      // console.log('No badge, skipping');
+      return;
+    }
+
+    // console.log('Badge outerHTML:', badge.outerHTML);
 
     const badgeText = badge.textContent.toLowerCase();
     const badgeLabel = badge.getAttribute('aria-label') || '';
     const badgeTooltip = badge.querySelector('tp-yt-paper-tooltip') ? badge.querySelector('tp-yt-paper-tooltip').textContent : '';
+    // console.log('Badge text:', badgeText, 'Label:', badgeLabel, 'Tooltip:', badgeTooltip);
+
     const isMember = SELECTORS.memberKeywords.some(keyword => 
       badgeText.includes(keyword.toLowerCase()) || 
       badgeLabel.toLowerCase().includes(keyword.toLowerCase()) ||
       badgeTooltip.toLowerCase().includes(keyword.toLowerCase())
     );
-    if (!isMember) return;
+    console.log('Is member:', isMember);
+    if (!isMember) {
+      // console.log('Not member, skipping');
+      return;
+    }
 
     // 2. 取得 ID (以此為基準合併資料)
     const timeLinkNode = postNode.querySelector(SELECTORS.timeLink);
@@ -140,8 +179,31 @@ function autoScrollAndExtract() {
       }
     }
 
+    // 6. 解析投票區塊
+    let voteData = existing.voteData || null;
+    const pollNode = postNode.querySelector(SELECTORS.pollContainer);
+    if (pollNode) {
+      const totalVotesNode = pollNode.querySelector(SELECTORS.pollTotalVotes);
+      const totalVotes = totalVotesNode ? totalVotesNode.textContent.trim() : '';
+      const choiceNodes = Array.from(pollNode.querySelectorAll(SELECTORS.pollChoices));
+      const choices = choiceNodes.map(item => {
+        const text = item.querySelector(SELECTORS.pollChoiceText)?.textContent.trim() || '';
+        const pctNode = item.querySelector(SELECTORS.pollChoicePercentage);
+        const hasResult = pctNode && pctNode.getAttribute('hidden') === null;
+        const percentage = hasResult ? pctNode.textContent.trim() : null;
+        const barStyle = hasResult ? (item.querySelector(SELECTORS.pollProgressBar)?.getAttribute('style') || '') : '';
+        const widthMatch = barStyle.match(/width:([\d.]+)%/);
+        const width = widthMatch ? parseFloat(widthMatch[1]) : 0;
+        return { text, percentage, width };
+      });
+      if (choices.length > 0) {
+        const voted = choices.some(c => c.percentage !== null);
+        voteData = { totalVotes, voted, choices };
+      }
+    }
+
     // 每次掃描都覆蓋/更新 Map 裡的資料
-    collectedPosts.set(postId, { parsedContent, timeText, postLink, images: mergedImages, videoData, hasMultipleImages });
+    collectedPosts.set(postId, { parsedContent, timeText, postLink, images: mergedImages, videoData, hasMultipleImages, voteData });
   };
 
   const scrollInterval = setInterval(() => {
@@ -162,10 +224,13 @@ function autoScrollAndExtract() {
         
         // 滾動確定結束後，再一次性抓取所有貼文
         if (mainContainer) {
-          mainContainer.querySelectorAll(SELECTORS.postWrapper).forEach(extractPost);
+          const posts = mainContainer.querySelectorAll(SELECTORS.postWrapper);
+          // console.log('Found posts:', posts.length);
+          posts.forEach(extractPost);
         }
         
         const results = Array.from(collectedPosts.values());
+        // console.log('Collected results:', results.length, results);
         
         toast.textContent = `擷取完畢！共 ${results.length} 篇，準備開啟閱讀器...`;
         toast.style.background = '#000';
@@ -182,4 +247,12 @@ function autoScrollAndExtract() {
       noChangeCount = 0;
     }
   }, 1000);
+}
+
+function showToast(message) {
+  const toast = document.createElement('div');
+  toast.style.cssText = 'position:fixed; top:80px; left:50%; transform:translateX(-50%); background:#ff4444; color:#fff; padding:10px 20px; border-radius:20px; z-index:9999; font-weight:bold;';
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
 }
