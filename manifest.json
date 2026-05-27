@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "YouTube 會員貼文閱讀器",
+  "name": "YouTube Member Posts Reader",
   "version": "1.0.0",
   "description": "自動往下捲動並擷取會員限定貼文，在新分頁中整理顯示。",
   "author": "cjzopen",
@@ -8,10 +8,13 @@
   "permissions": [
     "storage",
     "activeTab",
-    "scripting"
+    "scripting",
+    "downloads"
   ],
   "host_permissions": [
-    "*://*.youtube.com/*"
+    "*://*.youtube.com/*",
+    "*://*.ytimg.com/*",
+    "*://*.ggpht.com/*"
   ],
   "action": {
     "default_icon": {

@@ -235,7 +235,7 @@ function autoScrollAndExtract() {
         toast.textContent = `擷取完畢！共 ${results.length} 篇，準備開啟閱讀器...`;
         toast.style.background = '#000';
         
-        chrome.storage.local.set({ memberPosts: results }, () => {
+        chrome.storage.local.set({ memberPosts: results, pageTitle: document.title }, () => {
           chrome.runtime.sendMessage({ action: 'openReader' });
           setTimeout(() => toast.remove(), 3000);
           window.isYtScrollerRunning = false;

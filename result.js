@@ -2,8 +2,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const urlParams = new URLSearchParams(window.location.search);
   const sourceUrl = urlParams.get('source');
 
-  chrome.storage.local.get(['memberPosts'], (result) => {
+  const now = new Date();
+  const dateStr = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
+  const timeStr = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit', hour12: false }).format(now);
+  document.querySelector('h1 time').textContent = `${dateStr} ${timeStr}`;
+
+  chrome.storage.local.get(['memberPosts', 'pageTitle'], (result) => {
     const posts = result.memberPosts || [];
+    const pageTitle = result.pageTitle || 'YouTube 會員貼文';
     const container = document.getElementById('posts-container');
     const filterSelect = document.getElementById('year-filter');
 
@@ -140,6 +146,8 @@ document.addEventListener('DOMContentLoaded', () => {
       container.appendChild(card);
     });
 
+    document.getElementById('download-btn').addEventListener('click', () => downloadPosts(posts, pageTitle));
+
     // 過濾卡片年份
     filterSelect.addEventListener('change', (e) => {
       const selectedValue = e.target.value;
@@ -162,6 +170,60 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 });
+
+async function downloadPosts(posts, pageTitle) {
+  const btn = document.getElementById('download-btn');
+  btn.disabled = true;
+  btn.textContent = 'Downloading...';
+
+  const zipName = pageTitle.replace(/ - YouTube$/i, '').replace(/[\\/:*?"<>|]/g, '_').trim() || 'yt-member-posts';
+  const zip = new JSZip();
+  const imagesFolder = zip.folder('images');
+
+  const allImageUrls = new Set();
+  posts.forEach(post => {
+    (post.images || []).forEach(src => allImageUrls.add(src));
+    if (post.videoData?.thumb) allImageUrls.add(post.videoData.thumb);
+  });
+
+  const imageUrlToLocal = new Map();
+  let imgIndex = 0;
+  for (const url of allImageUrls) {
+    try {
+      const resp = await fetch(url);
+      if (!resp.ok) throw new Error();
+      const blob = await resp.blob();
+      let ext = 'jpg';
+      if (blob.type === 'image/png') ext = 'png';
+      else if (blob.type === 'image/webp') ext = 'webp';
+      imgIndex++;
+      const filename = `img_${String(imgIndex).padStart(3, '0')}.${ext}`;
+      imagesFolder.file(filename, blob, { compression: 'STORE' });
+      imageUrlToLocal.set(url, filename);
+    } catch {
+      // 保留原始 URL
+    }
+  }
+
+  const clone = document.documentElement.cloneNode(true);
+  clone.querySelectorAll('script').forEach(s => s.remove());
+  clone.querySelector('.download-area')?.remove();
+  clone.querySelectorAll('img').forEach(img => {
+    const local = imageUrlToLocal.get(img.getAttribute('src'));
+    if (local) img.setAttribute('src', `images/${local}`);
+  });
+  zip.file('index.html', '<!DOCTYPE html>\n' + clone.outerHTML, { compression: 'DEFLATE' });
+
+  const zipBlob = await zip.generateAsync({ type: 'blob' });
+  const blobUrl = URL.createObjectURL(zipBlob);
+  await new Promise(resolve => {
+    chrome.downloads.download({ url: blobUrl, filename: `${zipName}.zip`, conflictAction: 'overwrite' },
+      () => { URL.revokeObjectURL(blobUrl); resolve(); });
+  });
+
+  btn.textContent = 'Done';
+  setTimeout(() => { btn.disabled = false; btn.textContent = 'Download All Posts'; }, 3000);
+}
 
 function escapeHtml(unsafe) {
   return unsafe
