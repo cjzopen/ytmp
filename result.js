@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const linkHtml = post.postLink ? `<a href="${post.postLink}" target="_blank" class="post-link">前往原文</a>` : '';
 
-      const multiImgNotice = post.hasMultipleImages ? `<div style="color: var(--link-color); font-weight: bold; font-size: 0.85rem; margin-top: 5px;">*有複數圖片</div>` : '';
+
 
       card.innerHTML = `
         <div class="post-header">
@@ -138,7 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
           ${linkHtml}
         </div>
         <div class="post-text">${post.parsedContent}</div>
-        ${imagesHtml ? `<div class="post-images">${imagesHtml}${multiImgNotice}</div>` : ''}
+        ${imagesHtml ? `<div class="post-images">${imagesHtml}</div>` : ''}
         ${videoHtml}
         ${voteHtml}
       `;

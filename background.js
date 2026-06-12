@@ -65,7 +65,11 @@ function autoScrollAndExtract() {
     pollChoices: 'tp-yt-paper-item.vote-choice',
     pollChoiceText: 'yt-formatted-string.choice-text',
     pollChoicePercentage: 'yt-formatted-string.vote-percentage',
-    pollProgressBar: '.progress-bar'
+    pollProgressBar: '.progress-bar',
+
+    // 多圖輪播
+    multiImageRenderer: 'ytd-post-multi-image-renderer',
+    multiImageArrow: '#right-arrow'
   };
 
   const toast = document.createElement('div');
@@ -79,6 +83,7 @@ function autoScrollAndExtract() {
   let noChangeCount = 0;
 
   const escapeText = (str) => str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
   const extractPost = (postNode) => {
     // console.log('Processing post:', postNode);
@@ -157,8 +162,7 @@ function autoScrollAndExtract() {
       if (!mergedImages.includes(src)) mergedImages.push(src);
     });
 
-    // 檢查是否有「多張圖片」的指示器（右箭頭）
-    const hasMultipleImages = !!postNode.querySelector('ytd-post-multi-image-renderer #right-arrow-container') || existing.hasMultipleImages;
+
 
     // 5. 解析影片或直播區塊
     let videoData = existing.videoData || null;
@@ -203,7 +207,7 @@ function autoScrollAndExtract() {
     }
 
     // 每次掃描都覆蓋/更新 Map 裡的資料
-    collectedPosts.set(postId, { parsedContent, timeText, postLink, images: mergedImages, videoData, hasMultipleImages, voteData });
+    collectedPosts.set(postId, { parsedContent, timeText, postLink, images: mergedImages, videoData, voteData });
   };
 
   const scrollInterval = setInterval(() => {
@@ -222,24 +226,42 @@ function autoScrollAndExtract() {
       if (noChangeCount >= 8) {
         clearInterval(scrollInterval);
         
-        // 滾動確定結束後，再一次性抓取所有貼文
-        if (mainContainer) {
-          const posts = mainContainer.querySelectorAll(SELECTORS.postWrapper);
-          // console.log('Found posts:', posts.length);
-          posts.forEach(extractPost);
-        }
-        
-        const results = Array.from(collectedPosts.values());
-        // console.log('Collected results:', results.length, results);
-        
-        toast.textContent = `擷取完畢！共 ${results.length} 篇，準備開啟閱讀器...`;
-        toast.style.background = '#000';
-        
-        chrome.storage.local.set({ memberPosts: results, pageTitle: document.title }, () => {
-          chrome.runtime.sendMessage({ action: 'openReader' });
-          setTimeout(() => toast.remove(), 3000);
-          window.isYtScrollerRunning = false;
-        });
+        (async () => {
+          // Phase 1: 展開所有多圖輪播
+          if (mainContainer) {
+            const posts = mainContainer.querySelectorAll(SELECTORS.postWrapper);
+            const multiPosts = Array.from(posts).filter(p => p.querySelector(SELECTORS.multiImageRenderer));
+            
+            for (let i = 0; i < multiPosts.length; i++) {
+              toast.textContent = `正在展開多圖貼文 (${i + 1}/${multiPosts.length})...`;
+              const post = multiPosts[i];
+              const renderer = post.querySelector(SELECTORS.multiImageRenderer);
+              
+              post.scrollIntoView({ block: 'center', behavior: 'instant' });
+              await sleep(500);
+              
+              const arrow = renderer.querySelector(SELECTORS.multiImageArrow);
+              while (arrow && !arrow.hasAttribute('hidden')) {
+                arrow.click();
+                await sleep(300);
+              }
+            }
+            
+            // Phase 2: 一次性提取所有貼文
+            posts.forEach(extractPost);
+          }
+          
+          const results = Array.from(collectedPosts.values());
+          
+          toast.textContent = `擷取完畢！共 ${results.length} 篇，準備開啟閱讀器...`;
+          toast.style.background = '#000';
+          
+          chrome.storage.local.set({ memberPosts: results, pageTitle: document.title }, () => {
+            chrome.runtime.sendMessage({ action: 'openReader' });
+            setTimeout(() => toast.remove(), 3000);
+            window.isYtScrollerRunning = false;
+          });
+        })();
       }
     } else {
       lastHeight = currentHeight;
