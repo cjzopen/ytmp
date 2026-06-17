@@ -232,7 +232,11 @@ function autoScrollAndExtract(mode) {
           // Phase 1: 展開所有多圖輪播
           if (mainContainer) {
             const posts = mainContainer.querySelectorAll(SELECTORS.postWrapper);
-            const multiPosts = Array.from(posts).filter(p => p.querySelector(SELECTORS.multiImageRenderer));
+            // member 模式只展開會員貼文的多圖輪播，避免浪費時間點開將被略過的非會員貼文
+            const multiPosts = Array.from(posts).filter(p =>
+              p.querySelector(SELECTORS.multiImageRenderer) &&
+              (captureMode === 'all' || isMemberPost(p))
+            );
             
             for (let i = 0; i < multiPosts.length; i++) {
               toast.textContent = `正在展開多圖貼文 (${i + 1}/${multiPosts.length})...`;
@@ -258,7 +262,7 @@ function autoScrollAndExtract(mode) {
           toast.textContent = `擷取完畢！共 ${results.length} 篇，準備開啟閱讀器...`;
           toast.style.background = '#000';
           
-          chrome.storage.local.set({ memberPosts: results, pageTitle: document.title }, () => {
+          chrome.storage.local.set({ memberPosts: results, pageTitle: document.title, captureMode }, () => {
             chrome.runtime.sendMessage({ action: 'openReader' });
             setTimeout(() => toast.remove(), 3000);
             window.isYtScrollerRunning = false;

@@ -7,11 +7,17 @@ document.addEventListener('DOMContentLoaded', () => {
   const timeStr = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit', hour12: false }).format(now);
   document.querySelector('h1 time').textContent = `${dateStr} ${timeStr}`;
 
-  chrome.storage.local.get(['memberPosts', 'pageTitle'], (result) => {
+  chrome.storage.local.get(['memberPosts', 'pageTitle', 'captureMode'], (result) => {
     const posts = result.memberPosts || [];
     const pageTitle = result.pageTitle || 'YouTube 會員貼文';
+    const captureMode = result.captureMode === 'all' ? 'all' : 'member';
     const container = document.getElementById('posts-container');
     const filterSelect = document.getElementById('year-filter');
+    const typeSelect = document.getElementById('type-filter');
+    const typeFilterGroup = document.getElementById('type-filter-group');
+
+    // 只擷取會員貼文時全部都是會員貼文，類型篩選無意義，直接隱藏
+    if (captureMode === 'member') typeFilterGroup.style.display = 'none';
 
     container.innerHTML = '';
 
@@ -23,16 +29,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (sourceUrl) {
           chrome.tabs.create({ url: sourceUrl });
         } else {
-          // 尋找最近一個 YouTube 分頁並切換過去，若沒有則關閉當前頁面
+          // 尋找最近一個 YouTube 分頁並切換過去
           chrome.tabs.query({ url: "*://*.youtube.com/*" }, (tabs) => {
             if (tabs.length > 0) {
               chrome.tabs.update(tabs[0].id, { active: true });
               chrome.windows.update(tabs[0].windowId, { focused: true });
-            } else {
-              window.close();
             }
           });
         }
+        // 直接關閉目前的 result.html 分頁（擴充功能分頁用 tabs.remove 較可靠）
+        chrome.tabs.getCurrent((tab) => {
+          if (tab) chrome.tabs.remove(tab.id);
+        });
       });
       return;
     }
@@ -83,6 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const card = document.createElement('div');
       card.className = 'post-card';
       card.dataset.year = post.yearDiff;
+      card.dataset.member = post.isMember ? '1' : '0';
 
       const isLCP = index < 8;
       const uniqueImages = [...new Set(post.images)];
@@ -129,7 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const linkHtml = post.postLink ? `<a href="${post.postLink}" target="_blank" class="post-link">前往原文</a>` : '';
-      const memberBadgeHtml = post.isMember ? `<span class="member-badge">會員</span>` : '';
+      const memberBadgeHtml = post.isMember ? `<span class="member-badge">★</span>` : '';
 
 
 
@@ -149,26 +158,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('download-btn').addEventListener('click', () => downloadPosts(posts, pageTitle));
 
-    // 過濾卡片年份
-    filterSelect.addEventListener('change', (e) => {
-      const selectedValue = e.target.value;
+    // 同時套用「時間」與「類型」兩個篩選條件
+    const applyFilters = () => {
+      const yearValue = filterSelect.value;
+      const typeValue = captureMode === 'member' ? '' : typeSelect.value;
       const cards = document.querySelectorAll('.post-card');
-      
+
       cards.forEach(card => {
         const cardYear = parseInt(card.dataset.year, 10);
-        let shouldShow = false;
 
-        if (selectedValue === "") {
-          shouldShow = true; // 全部
-        } else if (selectedValue.startsWith(">")) {
-          const limit = parseInt(selectedValue.substring(1), 10);
-          shouldShow = cardYear > limit; // 大於指定年份 (例如 >2 代表三年以上)
+        let yearMatch = false;
+        if (yearValue === "") {
+          yearMatch = true; // 全部
+        } else if (yearValue.startsWith(">")) {
+          const limit = parseInt(yearValue.substring(1), 10);
+          yearMatch = cardYear > limit; // 大於指定年份 (例如 >2 代表三年以上)
         } else {
-          shouldShow = cardYear === parseInt(selectedValue, 10); // 匹配年份
+          yearMatch = cardYear === parseInt(yearValue, 10); // 匹配年份
         }
-        card.style.display = shouldShow ? '' : 'none';
+
+        let typeMatch = true;
+        if (typeValue === "member") {
+          typeMatch = card.dataset.member === '1';
+        } else if (typeValue === "normal") {
+          typeMatch = card.dataset.member !== '1';
+        }
+
+        card.style.display = (yearMatch && typeMatch) ? '' : 'none';
       });
-    });
+    };
+
+    filterSelect.addEventListener('change', applyFilters);
+    typeSelect.addEventListener('change', applyFilters);
   });
 });
 

@@ -16,7 +16,10 @@ chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
 });
 
 const start = (mode) => {
-  chrome.runtime.sendMessage({ action: 'start', mode }, () => window.close());
+  // 不等待回應（background 的 start 為非同步且不回傳），直接送出後關閉 popup，
+  // 避免 "message port closed before a response was received" 錯誤
+  chrome.runtime.sendMessage({ action: 'start', mode });
+  window.close();
 };
 
 btnMember.addEventListener('click', () => start('member'));
