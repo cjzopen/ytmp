@@ -52,6 +52,12 @@
         display: flex;
         align-items: center;
         gap: 12px;
+
+        & #type-filter-group {
+          display: inline-flex;
+          align-items: center;
+          gap: 12px;
+        }
       }
 
       & select {
@@ -151,6 +157,18 @@
         & .post-time {
           color: var(--text-sub);
           font-size: 0.9rem;
+
+          & .member-badge {
+            display: inline-block;
+            margin-left: 8px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #fff;
+            background: #2ba640;
+            vertical-align: middle;
+          }
         }
 
         & .post-link {
@@ -290,10 +308,11 @@
   </style>
 </head>
 <body>
-  <div id="no-data" style="display:none; text-align:center; padding: 50px;">
+  <div id="no-data" style="display:none; text-align:center; padding: 250px 50px;">
     <h2>沒有抓取到任何資料，請回上一頁重抓</h2>
-    <p>（這可能是因為您在抓取時切換了分頁，導致背景暫停渲染，或者目前確實沒有會員貼文）</p>
-    <button id="retry-btn" style="margin-top:20px; padding:10px 20px; font-size:16px; cursor:pointer; background-color:var(--link-color); color:white; border:none; border-radius:5px;">切換回上一頁</button>
+    <p>這可能是因為您在抓取時分頁記錄錯誤導致背景暫停渲染，或者目前確實沒有會員貼文。</p>
+    <p>通常再試一次就能成功。</p>
+    <button id="retry-btn" style="margin-top:20px; padding:10px 20px; font-size:16px; cursor:pointer; background-color:var(--link-color); color:white; border:none; border-radius:5px;">回上一頁再試一次</button>
   </div>
   <div class="container" id="main-app">
     <h1>會員限定貼文 - <time style="font-size:1rem"></time>（JST）</h1>
@@ -303,6 +322,14 @@
         <small>也可以在空白處右鍵 → 另存新檔</small>
       </div>
       <div class="filter-right">
+        <span id="type-filter-group">
+          <label for="type-filter">類型篩選：</label>
+          <select id="type-filter">
+            <option value="">全部</option>
+            <option value="member">會員貼文</option>
+            <option value="normal">一般貼文</option>
+          </select>
+        </span>
         <label for="year-filter">時間篩選：</label>
         <select id="year-filter"></select>
       </div>

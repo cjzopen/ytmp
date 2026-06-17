@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "YouTube Member Posts Reader",
-  "version": "1.0.1",
+  "version": "1.1.1",
   "description": "自動往下捲動並擷取會員限定貼文，在新分頁中整理顯示。",
   "author": "cjzopen",
   "default_locale": "zh_TW",
@@ -22,7 +22,8 @@
       "48": "icons/48.png",
       "128": "icons/128.png"
     },
-    "default_title": "開始擷取會員貼文"
+    "default_title": "擷取 YouTube 貼文",
+    "default_popup": "popup.html"
   },
   "icons": {
     "16": "icons/16.png",
