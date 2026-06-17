@@ -53,22 +53,23 @@
   </style>
 </head>
 <body>
-  <h1>擷取貼文</h1>
-  <p class="hint">選擇擷取範圍，會自動捲動頁面並整理貼文。</p>
+  <h1 data-i18n="popupTitle">擷取貼文</h1>
+  <p class="hint" data-i18n="popupHint">選擇擷取範圍，會自動捲動頁面並整理貼文。</p>
 
-  <div id="warn" class="warn">⚠️ 請在 YouTube 頻道的貼文 (Posts) 頁面使用。</div>
+  <div id="warn" class="warn" data-i18n="popupWarn">⚠️ 請在 YouTube 頻道的貼文 (Posts) 頁面使用。</div>
 
   <div id="actions">
     <button id="btn-member" class="btn-member">
-      只擷取會員貼文
-      <small>略過非會員貼文</small>
+      <span data-i18n="btnMember">只擷取會員貼文</span>
+      <small data-i18n="btnMemberSub">略過非會員貼文</small>
     </button>
     <button id="btn-all" class="btn-all">
-      擷取全部貼文
-      <small>含非會員貼文</small>
+      <span data-i18n="btnAll">擷取全部貼文</span>
+      <small data-i18n="btnAllSub">含非會員貼文</small>
     </button>
   </div>
 
+  <script src="i18n.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

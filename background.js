@@ -9,7 +9,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           chrome.scripting.executeScript({
             target: { tabId: tab.id },
             func: showToast,
-            args: ['已有頁面執行中']
+            args: ['Already running']
           });
           return;
         }
@@ -83,7 +83,7 @@ function autoScrollAndExtract(mode) {
 
   const toast = document.createElement('div');
   toast.style.cssText = 'position:fixed; top:80px; left:50%; transform:translateX(-50%); background:#2ba640; color:#fff; padding:10px 20px; border-radius:20px; z-index:9999; font-weight:bold;';
-  toast.textContent = (captureMode === 'all' ? '擷取全部貼文中' : '擷取會員貼文中') + '...請勿離開此分頁';
+  toast.textContent = 'Capturing… keep this tab open';
   document.body.appendChild(toast);
 
   const collectedPosts = new Map();
@@ -123,7 +123,7 @@ function autoScrollAndExtract(mode) {
 
     // 取得現有資料以便後續「合併更新」
     const existing = collectedPosts.get(postId) || {};
-    const timeText = timeLinkNode ? timeLinkNode.textContent.trim() : (existing.timeText || '未知時間');
+    const timeText = timeLinkNode ? timeLinkNode.textContent.trim() : (existing.timeText || 'Unknown');
 
     // 3. 解析文字與超連結
     let parsedContent = existing.parsedContent || '';
@@ -170,7 +170,7 @@ function autoScrollAndExtract(mode) {
     const videoNode = postNode.querySelector(SELECTORS.videoWrapper);
     if (videoNode) {
       const titleNode = videoNode.querySelector(SELECTORS.videoTitle);
-      const title = titleNode ? titleNode.textContent.trim() : '觀看影片/直播';
+      const title = titleNode ? titleNode.textContent.trim() : 'Video';
       
       const linkNode = videoNode.querySelector(SELECTORS.videoLink);
       const url = linkNode ? linkNode.href : postLink; // 若沒抓到 a 標籤則退回貼文原文連結
@@ -239,7 +239,7 @@ function autoScrollAndExtract(mode) {
             );
             
             for (let i = 0; i < multiPosts.length; i++) {
-              toast.textContent = `正在展開多圖貼文 (${i + 1}/${multiPosts.length})...`;
+              toast.textContent = `Expanding images (${i + 1}/${multiPosts.length})`;
               const post = multiPosts[i];
               const renderer = post.querySelector(SELECTORS.multiImageRenderer);
               
@@ -259,7 +259,7 @@ function autoScrollAndExtract(mode) {
           
           const results = Array.from(collectedPosts.values());
           
-          toast.textContent = `擷取完畢！共 ${results.length} 篇，準備開啟閱讀器...`;
+          toast.textContent = `Done: ${results.length} posts`;
           toast.style.background = '#000';
           
           chrome.storage.local.set({ memberPosts: results, pageTitle: document.title, captureMode }, () => {

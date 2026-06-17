@@ -1,10 +1,44 @@
 {
-  "appName": {
-    "message": "YouTube Member Posts Reader",
-    "description": "The name of the extension"
-  },
   "appDescription": {
     "message": "自動往下捲動並擷取會員限定貼文，在新分頁中整理顯示。",
     "description": "The description of the extension"
-  }
+  },
+  "actionTitle": {
+    "message": "擷取 YouTube 貼文",
+    "description": "Toolbar button tooltip"
+  },
+  "popupTitle": { "message": "擷取貼文" },
+  "popupHint": { "message": "選擇擷取範圍，會自動捲動頁面並整理貼文。" },
+  "popupWarn": { "message": "⚠️ 請在 YouTube 頻道的貼文 (Posts) 頁面使用。" },
+  "btnMember": { "message": "只擷取會員貼文" },
+  "btnMemberSub": { "message": "略過非會員貼文" },
+  "btnAll": { "message": "擷取全部貼文" },
+  "btnAllSub": { "message": "含非會員貼文" },
+  "resultDocTitle": { "message": "頻道貼文" },
+  "noDataTitle": { "message": "沒有抓取到任何資料，請回上一頁重抓" },
+  "noDataDesc1": { "message": "這可能是因為您在抓取時分頁記錄錯誤導致背景暫停渲染，或者目前確實沒有貼文。" },
+  "noDataDesc2": { "message": "通常再試一次就能成功。" },
+  "retryBtn": { "message": "回上一頁再試一次" },
+  "downloadBtn": { "message": "下載全部貼文" },
+  "downloadHint": { "message": "也可以在空白處右鍵 → 另存新檔" },
+  "filterType": { "message": "類型篩選：" },
+  "filterYear": { "message": "時間篩選：" },
+  "optAll": { "message": "全部" },
+  "optMember": { "message": "會員貼文" },
+  "optNormal": { "message": "一般貼文" },
+  "optWithinYear": { "message": "一年內" },
+  "yearAgo": {
+    "message": "$N$ 年前",
+    "placeholders": { "n": { "content": "$1" } }
+  },
+  "yearsAgo": {
+    "message": "$N$ 年前",
+    "placeholders": { "n": { "content": "$1" } }
+  },
+  "overYears": {
+    "message": "超過 $N$ 年",
+    "placeholders": { "n": { "content": "$1" } }
+  },
+  "pageTitleFallback": { "message": "YouTube 會員貼文" },
+  "postLink": { "message": "前往原文" }
 }
