@@ -1,26 +1,32 @@
-chrome.action.onClicked.addListener((tab) => {
-  if (!tab.url.includes('youtube.com')) return;
+// 由 popup 觸發：request.mode 為 'member'（僅會員，預設）或 'all'（全部貼文）
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === 'start') {
+    chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
+      if (!tab || !tab.url || !tab.url.includes('youtube.com')) return;
 
-  chrome.storage.local.get(['isRunning'], (result) => {
-    if (result.isRunning) {
-      chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        func: showToast,
-        args: ['已有頁面執行中']
-      });
-      return;
-    }
+      chrome.storage.local.get(['isRunning'], (result) => {
+        if (result.isRunning) {
+          chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            func: showToast,
+            args: ['已有頁面執行中']
+          });
+          return;
+        }
 
-    chrome.storage.local.set({ isRunning: true, sourceUrl: tab.url }, () => {
-      chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        func: autoScrollAndExtract
+        const mode = request.mode === 'all' ? 'all' : 'member';
+        chrome.storage.local.set({ isRunning: true, sourceUrl: tab.url }, () => {
+          chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            func: autoScrollAndExtract,
+            args: [mode]
+          });
+        });
       });
     });
-  });
-});
+    return;
+  }
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'openReader') {
     chrome.storage.local.get(['sourceUrl'], (result) => {
       const sourceUrl = result.sourceUrl || '';
@@ -30,9 +36,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
-function autoScrollAndExtract() {
+function autoScrollAndExtract(mode) {
   if (window.isYtScrollerRunning) return;
   window.isYtScrollerRunning = true;
+
+  // 擷取範圍：'member' = 僅會員貼文（預設）；'all' = 全部貼文
+  const captureMode = mode === 'all' ? 'all' : 'member';
 
   // ==========================================
   // [集中設定區] 未來 YouTube 改版，只需修改這裡
@@ -74,7 +83,7 @@ function autoScrollAndExtract() {
 
   const toast = document.createElement('div');
   toast.style.cssText = 'position:fixed; top:80px; left:50%; transform:translateX(-50%); background:#2ba640; color:#fff; padding:10px 20px; border-radius:20px; z-index:9999; font-weight:bold;';
-  toast.textContent = '截取中...請勿離開此分頁';
+  toast.textContent = (captureMode === 'all' ? '擷取全部貼文中' : '擷取會員貼文中') + '...請勿離開此分頁';
   document.body.appendChild(toast);
 
   const collectedPosts = new Map();
@@ -85,34 +94,26 @@ function autoScrollAndExtract() {
   const escapeText = (str) => str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-  const extractPost = (postNode) => {
-    // console.log('Processing post:', postNode);
-
-    // 1. 判定會員資格
+  // 判定單篇貼文是否為會員限定（依會員徽章文字 / aria-label / tooltip 比對多語關鍵字）
+  const isMemberPost = (postNode) => {
     const badge = postNode.querySelector(SELECTORS.memberBadge);
-    // console.log('Badge found:', badge);
-    if (!badge) {
-      // console.log('No badge, skipping');
-      return;
-    }
-
-    // console.log('Badge outerHTML:', badge.outerHTML);
+    if (!badge) return false;
 
     const badgeText = badge.textContent.toLowerCase();
-    const badgeLabel = badge.getAttribute('aria-label') || '';
-    const badgeTooltip = badge.querySelector('tp-yt-paper-tooltip') ? badge.querySelector('tp-yt-paper-tooltip').textContent : '';
-    // console.log('Badge text:', badgeText, 'Label:', badgeLabel, 'Tooltip:', badgeTooltip);
+    const badgeLabel = (badge.getAttribute('aria-label') || '').toLowerCase();
+    const tooltipNode = badge.querySelector('tp-yt-paper-tooltip');
+    const badgeTooltip = tooltipNode ? tooltipNode.textContent.toLowerCase() : '';
 
-    const isMember = SELECTORS.memberKeywords.some(keyword => 
-      badgeText.includes(keyword.toLowerCase()) || 
-      badgeLabel.toLowerCase().includes(keyword.toLowerCase()) ||
-      badgeTooltip.toLowerCase().includes(keyword.toLowerCase())
-    );
-    console.log('Is member:', isMember);
-    if (!isMember) {
-      // console.log('Not member, skipping');
-      return;
-    }
+    return SELECTORS.memberKeywords.some(keyword => {
+      const k = keyword.toLowerCase();
+      return badgeText.includes(k) || badgeLabel.includes(k) || badgeTooltip.includes(k);
+    });
+  };
+
+  const extractPost = (postNode) => {
+    // 1. 依模式判定是否擷取此貼文：member 模式只收會員貼文，all 模式全收
+    const member = isMemberPost(postNode);
+    if (captureMode === 'member' && !member) return;
 
     // 2. 取得 ID (以此為基準合併資料)
     const timeLinkNode = postNode.querySelector(SELECTORS.timeLink);
@@ -206,8 +207,9 @@ function autoScrollAndExtract() {
       }
     }
 
-    // 每次掃描都覆蓋/更新 Map 裡的資料
-    collectedPosts.set(postId, { parsedContent, timeText, postLink, images: mergedImages, videoData, voteData });
+    // 每次掃描都覆蓋/更新 Map 裡的資料（isMember 供 all 模式在閱讀器標示會員貼文）
+    const isMember = existing.isMember || member;
+    collectedPosts.set(postId, { parsedContent, timeText, postLink, images: mergedImages, videoData, voteData, isMember });
   };
 
   const scrollInterval = setInterval(() => {

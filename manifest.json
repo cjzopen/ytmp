@@ -22,7 +22,8 @@
       "48": "icons/48.png",
       "128": "icons/128.png"
     },
-    "default_title": "開始擷取會員貼文"
+    "default_title": "擷取 YouTube 貼文",
+    "default_popup": "popup.html"
   },
   "icons": {
     "16": "icons/16.png",

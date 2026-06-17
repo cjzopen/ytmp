@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      width: 240px;
+      margin: 0;
+      padding: 16px;
+      font-family: "Roboto", "Noto Sans TC", Arial, sans-serif;
+      background: #fff;
+      color: #0f0f0f;
+    }
+    h1 {
+      font-size: 14px;
+      font-weight: 700;
+      margin: 0 0 4px;
+    }
+    p.hint {
+      font-size: 12px;
+      color: #606060;
+      margin: 0 0 14px;
+      line-height: 1.4;
+    }
+    button {
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      border: none;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: filter .15s ease;
+    }
+    button:hover { filter: brightness(0.93); }
+    button:disabled { opacity: .5; cursor: not-allowed; filter: none; }
+    .btn-member { background: #2ba640; color: #fff; }
+    .btn-all { background: #f2f2f2; color: #0f0f0f; }
+    .btn-member small,
+    .btn-all small { display: block; font-weight: 400; font-size: 11px; opacity: .85; margin-top: 2px; }
+    .warn {
+      font-size: 12px;
+      color: #c00;
+      background: #fdecea;
+      border-radius: 8px;
+      padding: 10px;
+      line-height: 1.4;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>擷取貼文</h1>
+  <p class="hint">選擇擷取範圍，會自動捲動頁面並整理貼文。</p>
+
+  <div id="warn" class="warn">⚠️ 請在 YouTube 頻道的貼文 (Posts) 頁面使用。</div>
+
+  <div id="actions">
+    <button id="btn-member" class="btn-member">
+      只擷取會員貼文
+      <small>預設・略過非會員貼文與輪播</small>
+    </button>
+    <button id="btn-all" class="btn-all">
+      擷取全部貼文
+      <small>含非會員貼文（較花時間）</small>
+    </button>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

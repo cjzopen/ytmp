@@ -129,12 +129,13 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const linkHtml = post.postLink ? `<a href="${post.postLink}" target="_blank" class="post-link">前往原文</a>` : '';
+      const memberBadgeHtml = post.isMember ? `<span class="member-badge">會員</span>` : '';
 
 
 
       card.innerHTML = `
         <div class="post-header">
-          <div class="post-time">${post.timeText}</div>
+          <div class="post-time">${post.timeText}${memberBadgeHtml}</div>
           ${linkHtml}
         </div>
         <div class="post-text">${post.parsedContent}</div>
