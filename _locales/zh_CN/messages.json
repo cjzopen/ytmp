@@ -1,0 +1,44 @@
+{
+  "appDescription": {
+    "message": "自动向下滚动并抓取会员专属帖子，在新标签页中整理显示。",
+    "description": "The description of the extension"
+  },
+  "actionTitle": {
+    "message": "抓取 YouTube 帖子",
+    "description": "Toolbar button tooltip"
+  },
+  "popupTitle": { "message": "抓取帖子" },
+  "popupHint": { "message": "选择抓取范围，会自动滚动页面并整理帖子。" },
+  "popupWarn": { "message": "⚠️ 请在 YouTube 频道的帖子 (Posts) 页面使用。" },
+  "btnMember": { "message": "仅抓取会员帖子" },
+  "btnMemberSub": { "message": "跳过非会员帖子" },
+  "btnAll": { "message": "抓取全部帖子" },
+  "btnAllSub": { "message": "包含非会员帖子" },
+  "resultDocTitle": { "message": "频道帖子" },
+  "noDataTitle": { "message": "没有抓取到任何数据，请返回上一页重新抓取" },
+  "noDataDesc1": { "message": "这可能是因为抓取时标签页记录错误导致后台暂停渲染，或者目前确实没有帖子。" },
+  "noDataDesc2": { "message": "通常再试一次就能成功。" },
+  "retryBtn": { "message": "返回上一页重试" },
+  "downloadBtn": { "message": "下载全部帖子" },
+  "downloadHint": { "message": "也可以在空白处右键 → 另存为" },
+  "filterType": { "message": "类型筛选：" },
+  "filterYear": { "message": "时间筛选：" },
+  "optAll": { "message": "全部" },
+  "optMember": { "message": "会员帖子" },
+  "optNormal": { "message": "普通帖子" },
+  "optWithinYear": { "message": "一年内" },
+  "yearAgo": {
+    "message": "$N$ 年前",
+    "placeholders": { "n": { "content": "$1" } }
+  },
+  "yearsAgo": {
+    "message": "$N$ 年前",
+    "placeholders": { "n": { "content": "$1" } }
+  },
+  "overYears": {
+    "message": "超过 $N$ 年",
+    "placeholders": { "n": { "content": "$1" } }
+  },
+  "pageTitleFallback": { "message": "YouTube 会员帖子" },
+  "postLink": { "message": "前往原帖" }
+}

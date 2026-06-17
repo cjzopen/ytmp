@@ -1,0 +1,44 @@
+{
+  "appDescription": {
+    "message": "Auto-scroll and capture members-only posts, then organize them in a new tab.",
+    "description": "The description of the extension"
+  },
+  "actionTitle": {
+    "message": "Capture YouTube posts",
+    "description": "Toolbar button tooltip"
+  },
+  "popupTitle": { "message": "Capture posts" },
+  "popupHint": { "message": "Choose what to capture. The page will auto-scroll and collect posts." },
+  "popupWarn": { "message": "⚠️ Use this on a YouTube channel's Posts page." },
+  "btnMember": { "message": "Members-only posts" },
+  "btnMemberSub": { "message": "Skip non-member posts" },
+  "btnAll": { "message": "All posts" },
+  "btnAllSub": { "message": "Includes non-member posts" },
+  "resultDocTitle": { "message": "Channel posts" },
+  "noDataTitle": { "message": "No data captured. Please go back and try again." },
+  "noDataDesc1": { "message": "This can happen if the tab lost focus and background rendering paused, or there really are no posts." },
+  "noDataDesc2": { "message": "Trying once more usually works." },
+  "retryBtn": { "message": "Go back and retry" },
+  "downloadBtn": { "message": "Download All Posts" },
+  "downloadHint": { "message": "You can also right-click a blank area → Save as" },
+  "filterType": { "message": "Type:" },
+  "filterYear": { "message": "Time:" },
+  "optAll": { "message": "All" },
+  "optMember": { "message": "Member posts" },
+  "optNormal": { "message": "Regular posts" },
+  "optWithinYear": { "message": "Within a year" },
+  "yearAgo": {
+    "message": "$N$ year ago",
+    "placeholders": { "n": { "content": "$1" } }
+  },
+  "yearsAgo": {
+    "message": "$N$ years ago",
+    "placeholders": { "n": { "content": "$1" } }
+  },
+  "overYears": {
+    "message": "Over $N$ years",
+    "placeholders": { "n": { "content": "$1" } }
+  },
+  "pageTitleFallback": { "message": "YouTube member posts" },
+  "postLink": { "message": "View original" }
+}

@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   chrome.storage.local.get(['memberPosts', 'pageTitle', 'captureMode'], (result) => {
     const posts = result.memberPosts || [];
-    const pageTitle = result.pageTitle || 'YouTube 會員貼文';
+    const pageTitle = result.pageTitle || chrome.i18n.getMessage('pageTitleFallback');
     const captureMode = result.captureMode === 'all' ? 'all' : 'member';
     const container = document.getElementById('posts-container');
     const filterSelect = document.getElementById('year-filter');
@@ -45,45 +45,45 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const numMap = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
+    // i18n 小工具：帶數字的訊息用阿拉伯數字填入 $N$ 佔位
+    const msg = (key, n) => chrome.i18n.getMessage(key, n != null ? [String(n)] : undefined);
+    const yearAgoLabel = (n) => msg(n === 1 ? 'yearAgo' : 'yearsAgo', n);
     let maxYear = 0;
 
-    // 處理資料並找出最大年份 (中、日、英文的「年」單位)
+    // 處理資料並找出最大年份（中／日「年」、英文 year）
     posts.forEach(post => {
       // 比對數字後方跟著「年」或「year/years」
       const match = post.timeText.match(/(\d+)\s*(?:年|year)/i);
-      
+
       // 若沒有匹配到「年」，代表是月、週、天、小時，統一歸類為 0 (一年內)
       post.yearDiff = match ? parseInt(match[1], 10) : 0;
-      
+
       if (post.yearDiff > maxYear) {
         maxYear = post.yearDiff;
       }
     });
 
     // 生成選項
-    let optionsHtml = '<option value="">全部</option>';
-    optionsHtml += '<option value="0">一年內</option>';
+    let optionsHtml = `<option value="">${msg('optAll')}</option>`;
+    optionsHtml += `<option value="0">${msg('optWithinYear')}</option>`;
 
     if (maxYear === 1) {
       // 若最舊的資料就是一年前，就只需要一個選項
-      optionsHtml += `<option value="1">一年前</option>`;
+      optionsHtml += `<option value="1">${yearAgoLabel(1)}</option>`;
     } else if (maxYear >= 2) {
       // 限制最大只處理到 11 (代表最多產出「超過十年」的選項)
-      const limit = Math.min(maxYear, 11); 
-      const specificMax = limit - 1; 
-      
+      const limit = Math.min(maxYear, 11);
+      const specificMax = limit - 1;
+
       // 產出獨立年份選項 (例如 1年前、2年前)
       for (let i = 1; i <= specificMax; i++) {
-        const chineseNum = i <= 10 ? numMap[i] : i;
-        optionsHtml += `<option value="${i}">${chineseNum}年前</option>`;
+        optionsHtml += `<option value="${i}">${yearAgoLabel(i)}</option>`;
       }
-      
+
       // 產出最後的收容區選項 (例如 超過2年、超過10年)
-      const chineseLastNum = specificMax <= 10 ? numMap[specificMax] : specificMax;
-      optionsHtml += `<option value=">${specificMax}">超過${chineseLastNum}年</option>`;
+      optionsHtml += `<option value=">${specificMax}">${msg('overYears', specificMax)}</option>`;
     }
-    
+
     filterSelect.innerHTML = optionsHtml;
 
     // 將年份綁定到 HTML dataset 上
@@ -137,7 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>`;
       }
 
-      const linkHtml = post.postLink ? `<a href="${post.postLink}" target="_blank" class="post-link">前往原文</a>` : '';
+      const linkHtml = post.postLink ? `<a href="${post.postLink}" target="_blank" class="post-link">${chrome.i18n.getMessage('postLink')}</a>` : '';
       const memberBadgeHtml = post.isMember ? `<span class="member-badge">★</span>` : '';
 
 

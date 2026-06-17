@@ -1,0 +1,44 @@
+{
+  "appDescription": {
+    "message": "自動スクロールしてメンバー限定投稿を取得し、新しいタブで整理して表示します。",
+    "description": "The description of the extension"
+  },
+  "actionTitle": {
+    "message": "YouTube 投稿を取得",
+    "description": "Toolbar button tooltip"
+  },
+  "popupTitle": { "message": "投稿を取得" },
+  "popupHint": { "message": "取得範囲を選んでください。ページを自動スクロールして投稿を整理します。" },
+  "popupWarn": { "message": "⚠️ YouTube チャンネルのコミュニティ（投稿）ページで使用してください。" },
+  "btnMember": { "message": "メンバー投稿のみ取得" },
+  "btnMemberSub": { "message": "メンバー以外の投稿をスキップ" },
+  "btnAll": { "message": "すべての投稿を取得" },
+  "btnAllSub": { "message": "メンバー以外の投稿も含む" },
+  "resultDocTitle": { "message": "チャンネル投稿" },
+  "noDataTitle": { "message": "データを取得できませんでした。前のページに戻ってやり直してください。" },
+  "noDataDesc1": { "message": "取得中にタブが切り替わって背景レンダリングが停止したか、投稿が存在しない可能性があります。" },
+  "noDataDesc2": { "message": "もう一度試すと成功することが多いです。" },
+  "retryBtn": { "message": "前のページに戻ってやり直す" },
+  "downloadBtn": { "message": "すべての投稿をダウンロード" },
+  "downloadHint": { "message": "空白部分を右クリック → 名前を付けて保存もできます" },
+  "filterType": { "message": "種類で絞り込み：" },
+  "filterYear": { "message": "期間で絞り込み：" },
+  "optAll": { "message": "すべて" },
+  "optMember": { "message": "メンバー投稿" },
+  "optNormal": { "message": "通常の投稿" },
+  "optWithinYear": { "message": "1年以内" },
+  "yearAgo": {
+    "message": "$N$ 年前",
+    "placeholders": { "n": { "content": "$1" } }
+  },
+  "yearsAgo": {
+    "message": "$N$ 年前",
+    "placeholders": { "n": { "content": "$1" } }
+  },
+  "overYears": {
+    "message": "$N$ 年以上前",
+    "placeholders": { "n": { "content": "$1" } }
+  },
+  "pageTitleFallback": { "message": "YouTube メンバー投稿" },
+  "postLink": { "message": "元の投稿へ" }
+}
