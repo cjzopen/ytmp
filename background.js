@@ -48,7 +48,8 @@ function autoScrollAndExtract(mode) {
   // ==========================================
   const SELECTORS = {
     // 佈局與外層
-    container: '#contents',
+    // 只取「直接裝著貼文」的 #contents，避免抓到冷載入時排在前面的推薦 shelf 容器（其 #contents 沒有貼文）
+    container: '#contents:has(> ytd-backstage-post-thread-renderer), #contents:has(> ytd-post-renderer)',
     postWrapper: 'ytd-backstage-post-thread-renderer, ytd-post-renderer',
     
     // 會員判定
